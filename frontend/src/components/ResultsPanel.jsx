@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 function clsx(...xs) {
   return xs.filter(Boolean).join(" ");
@@ -46,7 +46,9 @@ function SectionCard({ title, subtitle, right, children }) {
       <div className="p-4 sm:p-5 border-b border-slate-200 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-slate-900">{title}</div>
-          {subtitle ? <div className="text-xs text-slate-600 mt-1">{subtitle}</div> : null}
+          {subtitle ? (
+            <div className="text-xs text-slate-600 mt-1">{subtitle}</div>
+          ) : null}
         </div>
         {right ? <div className="shrink-0">{right}</div> : null}
       </div>
@@ -93,8 +95,10 @@ function ProgressBar({ value }) {
 }
 
 function ScorePill({ matchPercent, grade }) {
-  const tone = matchPercent >= 75 ? "green" : matchPercent >= 55 ? "amber" : "red";
-  const label = matchPercent >= 75 ? "Strong" : matchPercent >= 55 ? "Okay" : "Needs work";
+  const tone =
+    matchPercent >= 75 ? "green" : matchPercent >= 55 ? "amber" : "red";
+  const label =
+    matchPercent >= 75 ? "Strong" : matchPercent >= 55 ? "Okay" : "Needs work";
   return (
     <div className="flex items-center gap-2">
       <Badge tone={tone}>{label}</Badge>
@@ -214,7 +218,12 @@ ${(s.bullet_rewrites || [])
 
 function InfoCard({ title, right, children, className = "" }) {
   return (
-    <div className={clsx("rounded-2xl border border-slate-200 bg-white p-4 min-w-0", className)}>
+    <div
+      className={clsx(
+        "rounded-2xl border border-slate-200 bg-white p-4 min-w-0",
+        className
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="text-sm font-semibold text-slate-900">{title}</div>
         {right ? <div className="shrink-0">{right}</div> : null}
@@ -227,6 +236,17 @@ function InfoCard({ title, right, children, className = "" }) {
 export default function ResultsPanel({ result, loading, resumePreviewUrl }) {
   const [tab, setTab] = useState("recommendations");
   const [previewHeight, setPreviewHeight] = useState(70); // vh
+
+  // ✅ ONLY ADDITION: anchor ref for smooth scroll to tab content
+  const tabContentRef = useRef(null);
+
+  // ✅ ONLY ADDITION: smooth scroll helper
+  const scrollToTabContent = () => {
+    const el = tabContentRef.current;
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 88; // adjust if header height differs
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
 
   const safe = useMemo(() => {
     if (!result) return null;
@@ -389,27 +409,48 @@ export default function ResultsPanel({ result, loading, resumePreviewUrl }) {
             </div>
           </SectionCard>
 
-          <SectionCard
-            title="Navigation"
-            subtitle="Switch between key outputs (these update based on the JD you paste)."
-          >
+          <SectionCard title="Navigation" subtitle="Switch between key outputs (these update based on the JD you paste).">
             <div className="flex flex-wrap gap-2">
-              <Tab active={tab === "recommendations"} onClick={() => setTab("recommendations")}>
+              <Tab
+                active={tab === "recommendations"}
+                onClick={() => {
+                  setTab("recommendations");
+                  scrollToTabContent(); // ✅ ADDED
+                }}
+              >
                 Recommendations
               </Tab>
-              <Tab active={tab === "skills"} onClick={() => setTab("skills")}>
+              <Tab
+                active={tab === "skills"}
+                onClick={() => {
+                  setTab("skills");
+                  scrollToTabContent(); // ✅ ADDED
+                }}
+              >
                 Skills & Keywords
               </Tab>
-              <Tab active={tab === "ats"} onClick={() => setTab("ats")}>
+              <Tab
+                active={tab === "ats"}
+                onClick={() => {
+                  setTab("ats");
+                  scrollToTabContent(); // ✅ ADDED
+                }}
+              >
                 ATS Checks
               </Tab>
-              <Tab active={tab === "projects"} onClick={() => setTab("projects")}>
+              <Tab
+                active={tab === "projects"}
+                onClick={() => {
+                  setTab("projects");
+                  scrollToTabContent(); // ✅ ADDED
+                }}
+              >
                 Learning & Projects
               </Tab>
             </div>
           </SectionCard>
 
-          {/* ✅ NEW: Resume Insights (fills the blank section, no backend changes) */}
+          {/* ✅ NEW: Resume Insights (no backend change, just derived from existing data) */}
           <SectionCard
             title="Resume Insights"
             subtitle="Extra analysis & practical advice based on your current resume + JD match."
@@ -619,7 +660,10 @@ export default function ResultsPanel({ result, loading, resumePreviewUrl }) {
           </SectionCard>
         </div>
 
-        {/* Recommendations tab (unchanged logic/layout from your last version) */}
+        {/* ✅ SCROLL TARGET ANCHOR (added only for scroll) */}
+        <div ref={tabContentRef} />
+
+        {/* Recommendations tab (FULL - as you gave) */}
         {tab === "recommendations" && (
           <div className="2xl:col-span-2 min-w-0">
             <SectionCard
@@ -832,7 +876,7 @@ export default function ResultsPanel({ result, loading, resumePreviewUrl }) {
           </div>
         )}
 
-        {/* Other tabs (kept same logic as your last version) */}
+        {/* Other tabs (same logic as your version) */}
         {tab === "skills" && (
           <div className="2xl:col-span-2 min-w-0">
             <div className="grid 2xl:grid-cols-2 gap-6 min-w-0">

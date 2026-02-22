@@ -1,4 +1,4 @@
-export const API_BASE = "http://127.0.0.1:8000";
+export const API_BASE = import.meta.env.VITE_API_BASE || "https://resumeninja-backend2311.onrender.com";
 
 export async function analyzeResume({ file, jobDescription }) {
   const form = new FormData();

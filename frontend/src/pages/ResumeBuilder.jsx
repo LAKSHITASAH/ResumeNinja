@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+
+const API_BASE = import.meta.env.VITE_API_BASE;
 import NavBar from "../components/NavBar";
 
 function clsx(...xs) {
@@ -248,7 +250,8 @@ function Preview({ resume }) {
                 <div key={idx}>
                   <div className="flex items-baseline justify-between gap-4">
                     <div className="font-semibold">
-                      {p.title || "Project"}{p.tech ? ` — ${p.tech}` : ""}
+                      {p.title || "Project"}
+                      {p.tech ? ` — ${p.tech}` : ""}
                     </div>
                     <div className="text-xs text-slate-800">{p.dates || ""}</div>
                   </div>
@@ -268,7 +271,9 @@ function Preview({ resume }) {
         {/* Skills */}
         <PreviewSection title="TECHNICAL SKILLS">
           <div className="text-sm text-slate-800">
-            {(resume.skills_list || []).length ? resume.skills_list.join(", ") : "Add skills to improve ATS keyword matching."}
+            {(resume.skills_list || []).length
+              ? resume.skills_list.join(", ")
+              : "Add skills to improve ATS keyword matching."}
           </div>
         </PreviewSection>
 
@@ -308,7 +313,9 @@ export default function ResumeBuilder({ onNavigate }) {
 
   const [busy, setBusy] = useState(false);
 
-  const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+  // ✅ ONLY CHANGE: remove localhost fallback (use prod backend fallback instead)
+  const apiBase =
+    import.meta.env.VITE_API_BASE || "https://resumeninja-backend2311.onrender.com";
 
   const setField = (k, v) => setResume((r) => ({ ...r, [k]: v }));
 

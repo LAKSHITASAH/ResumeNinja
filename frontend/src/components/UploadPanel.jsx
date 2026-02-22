@@ -28,35 +28,27 @@ export default function UploadPanel({ onResult, onLoading, onError, onPreviewUrl
       return;
     }
 
-    // avoid spamming multiple requests at once (important for auto mode)
     if (inflightRef.current) return;
     inflightRef.current = true;
 
-    // preview url (PDF best)
     try {
       const url = URL.createObjectURL(file);
       onPreviewUrl?.(url);
-    } catch {
-      // ignore
-    }
+    } catch {}
 
     const form = new FormData();
-
-    // ✅ IMPORTANT: match backend field names to avoid 422
-    // backend expects: file + job_desc
-    form.append("file", file);
-    form.append("job_desc", jd || "");
+    form.append("resume", file);        // <-- backend expects "resume"
+form.append("job_desc", jd || "");
 
     if (showLoading) onLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/analyze", {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE}/analyze`, {
         method: "POST",
         body: form,
       });
 
       if (!res.ok) {
-        // show real backend validation error text
         const t = await res.text();
         throw new Error(t || "Request failed");
       }
@@ -72,23 +64,18 @@ export default function UploadPanel({ onResult, onLoading, onError, onPreviewUrl
     }
   }
 
-  // ✅ Debounced auto re-analyze when JD changes
   useEffect(() => {
     if (!canAuto) return;
 
     const jdTrim = (jd || "").trim();
     const prevTrim = (lastSentJdRef.current || "").trim();
-
-    // Avoid sending if unchanged
     if (jdTrim === prevTrim) return;
 
     const t = setTimeout(() => {
-      // Send without full loading skeleton (premium feel)
       sendAnalyze({ showLoading: false });
     }, 900);
 
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jd, canAuto]);
 
   return (
