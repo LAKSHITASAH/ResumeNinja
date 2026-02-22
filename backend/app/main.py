@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from typing import Optional, Any, Dict
+from typing import Any, Dict
 from pydantic import BaseModel
 from io import BytesIO
 
@@ -10,7 +10,6 @@ from app.models.schemas import AnalyzeResponse, MetricScores
 from app.services.parser import extract_resume_text
 from app.services.scoring import analyze
 
-# ✅ NEW (builder PDF)
 from app.services.builder_pdf import render_resume_pdf
 
 
@@ -18,7 +17,7 @@ app = FastAPI(title=settings.app_name, version=settings.version)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # OK for now. Later restrict to your frontend domain.
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,26 +36,20 @@ def health():
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_resume(
-    # ✅ accept both names (frontend might send either)
-    file: Optional[UploadFile] = File(None),
-    resume: Optional[UploadFile] = File(None),
-
-    # ✅ accept both names for JD too
+    resume: UploadFile = File(...),
     job_desc: str = Form(""),
-    job_description: str = Form("")
 ):
     try:
-        uploaded = file or resume
-        jd_text = (job_desc or "").strip() or (job_description or "").strip()
-
-        if not uploaded:
+        if not resume:
             raise HTTPException(status_code=400, detail="Missing resume file. Please upload PDF/DOCX.")
 
-        file_bytes = await uploaded.read()
+        file_bytes = await resume.read()
         if not file_bytes:
             raise HTTPException(status_code=400, detail="Empty file uploaded.")
 
-        text, _filetype = extract_resume_text(uploaded.filename or "", file_bytes)
+        jd_text = (job_desc or "").strip()
+
+        text, _filetype = extract_resume_text(resume.filename or "", file_bytes)
         if not text or len(text) < 50:
             raise HTTPException(status_code=400, detail="Could not extract enough text from resume.")
 
@@ -107,7 +100,7 @@ async def analyze_resume(
 
 
 # =========================
-# ✅ NEW: Resume Builder API
+# Resume Builder API
 # =========================
 class ResumeBuilderPayload(BaseModel):
     resume: Dict[str, Any]
